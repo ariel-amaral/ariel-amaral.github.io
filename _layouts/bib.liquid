@@ -76,9 +76,9 @@
         {%- endfor -%}
       {%- endif -%}
 
-      {%- comment %} CUSTOM: when self is hidden, show only 2 authors before "et al." {% endcomment -%}
+      {%- comment %} CUSTOM: when self is hidden, show only 1 author before "et al." {% endcomment -%}
       {% if self_in_hidden %}
-        {% assign author_array_limit = 2 %}
+        {% assign author_array_limit = 1 %}
       {% else %}
         {% assign author_array_limit = default_limit %}
       {% endif %}
@@ -108,7 +108,7 @@
             {%- if forloop.length > 2 %}, and {% else %} and {% endif -%}
           {%- else -%}
             , 
-          {%- endif -%}
+          {% endif %}
         {%- endif -%}
         {%- if author_is_self -%}
           <em>
@@ -152,23 +152,8 @@
           {%- endfor -%}
           {%- assign more_authors_show = more_authors_show | regex_replace: '([*∗†‡§¶‖&^]+)', '<sup>\1</sup>' -%}
 
-          {%- comment %} "et al." as a clickable toggle that expands to the list of other hidden authors {% endcomment %}
-          <span
-            class="more-authors"
-            title="click to view all hidden authors"
-            onclick="
-                var element = $(this);
-                element.attr('title', '');
-                var more_authors_text = element.text() == 'et al.' ? '{{ more_authors_show }}' : 'et al.';
-                var cursorPosition = 0;
-                var textAdder = setInterval(function(){
-                  element.html(more_authors_text.substring(0, cursorPosition + 1));
-                  if (++cursorPosition == more_authors_text.length){
-                    clearInterval(textAdder);
-                  }
-              }, '{{ site.more_authors_animation_delay }}');
-            "
-          >et al.</span>, including <em>{{ self_hidden_first }} {{ self_hidden_last_html }}</em>
+          {%- comment %} "et al." rendered as italic text only (not clickable) {% endcomment %}
+          <em>et al.</em>, including <em>{{ self_hidden_first }} {{ self_hidden_last_html }}</em>
           {% if remaining_authors > 0 %}
             {%- assign more_authors_hide = remaining_authors | append: ' more author' -%}
             {%- if remaining_authors > 1 -%}
