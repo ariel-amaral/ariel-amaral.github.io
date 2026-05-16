@@ -53,9 +53,34 @@
     <div class="author">
       {% assign author_array_size = entry.author_array | size %}
 
-      {% assign author_array_limit = author_array_size %}
+      {%- comment %} Default visible author limit (will be overridden below if self is hidden) {% endcomment -%}
+      {% assign default_limit = author_array_size %}
       {% if site.max_author_limit and author_array_size > site.max_author_limit %}
-        {% assign author_array_limit = site.max_author_limit %}
+        {% assign default_limit = site.max_author_limit %}
+      {% endif %}
+
+      {%- comment %} CUSTOM: detect whether the configured site author is in the hidden portion {% endcomment -%}
+      {%- assign self_in_hidden = false -%}
+      {%- assign self_hidden_first = '' -%}
+      {%- assign self_hidden_last_html = '' -%}
+      {%- if default_limit < author_array_size -%}
+        {%- for author in entry.author_array offset: default_limit -%}
+          {%- assign hidden_last = author.last | regex_replace: '[*∗†‡§¶‖&^]', '' -%}
+          {%- if site.scholar.last_name contains hidden_last -%}
+            {%- if site.scholar.first_name contains author.first -%}
+              {%- assign self_in_hidden = true -%}
+              {%- assign self_hidden_first = author.first -%}
+              {%- assign self_hidden_last_html = author.last | regex_replace: '([*∗†‡§¶‖&^]+)', '<sup>\1</sup>' -%}
+            {%- endif -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+
+      {%- comment %} CUSTOM: when self is hidden, show only 2 authors before "et al." {% endcomment -%}
+      {% if self_in_hidden %}
+        {% assign author_array_limit = 2 %}
+      {% else %}
+        {% assign author_array_limit = default_limit %}
       {% endif %}
 
       {%- for author in entry.author_array limit: author_array_limit -%}
@@ -78,12 +103,13 @@
           {% endfor %}
         {%- endif -%}
 
-        {%- if forloop.length > 1 -%}
-          {% if forloop.first == false -%}
-            {%- if forloop.length > 2 %}, {% elsif forloop.length == 2 %}  {% endif %}
-          {%- endif %}
-          {%- if forloop.last and author_array_limit == author_array_size %}and {% endif -%}
-        {% endif %}
+        {%- if forloop.first == false -%}
+          {%- if forloop.last and author_array_limit == author_array_size -%}
+            {%- if forloop.length > 2 %}, and {% else %} and {% endif -%}
+          {%- else -%}
+            , 
+          {%- endif -%}
+        {%- endif -%}
         {%- if author_is_self -%}
           <em>
             {{- author.first }}
@@ -103,50 +129,52 @@
       {% endfor %}
       {%- assign more_authors = author_array_size | minus: author_array_limit -%}
 
-      {%- comment %} Check whether the site owner appears in the hidden author portion {% endcomment -%}
-      {%- assign self_in_hidden = false -%}
-      {%- assign self_hidden_first = '' -%}
-      {%- assign self_hidden_last_html = '' -%}
-      {%- if more_authors > 0 -%}
-        {%- for author in entry.author_array offset: author_array_limit -%}
-          {%- assign hidden_last = author.last | regex_replace: '[*∗†‡§¶‖&^]', '' -%}
-          {%- if site.scholar.last_name contains hidden_last -%}
-            {%- if site.scholar.first_name contains author.first -%}
-              {%- assign self_in_hidden = true -%}
-              {%- assign self_hidden_first = author.first -%}
-              {%- assign self_hidden_last_html = author.last | regex_replace: '([*∗†‡§¶‖&^]+)', '<sup>\1</sup>' -%}
-            {%- endif -%}
-          {%- endif -%}
-        {%- endfor -%}
-      {%- endif -%}
-
       {% if more_authors > 0 %}
         {%- if self_in_hidden -%}
           {%- assign remaining_authors = more_authors | minus: 1 -%}
-          , including <em>{{ self_hidden_first }} {{ self_hidden_last_html }}</em>
-          {%- if remaining_authors > 0 -%}
+
+          {%- comment %} Build the list of OTHER hidden authors (excluding self) for the expand toggle {% endcomment -%}
+          {%- assign more_authors_show = '' -%}
+          {%- for author in entry.author_array offset: author_array_limit -%}
+            {%- assign curr_last = author.last | regex_replace: '[*∗†‡§¶‖&^]', '' -%}
+            {%- assign curr_is_self = false -%}
+            {%- if site.scholar.last_name contains curr_last -%}
+              {%- if site.scholar.first_name contains author.first -%}
+                {%- assign curr_is_self = true -%}
+              {%- endif -%}
+            {%- endif -%}
+            {%- unless curr_is_self -%}
+              {%- if more_authors_show != '' -%}
+                {%- assign more_authors_show = more_authors_show | append: ', ' -%}
+              {%- endif -%}
+              {%- assign more_authors_show = more_authors_show | append: author.first | append: ' ' | append: author.last -%}
+            {%- endunless -%}
+          {%- endfor -%}
+          {%- assign more_authors_show = more_authors_show | regex_replace: '([*∗†‡§¶‖&^]+)', '<sup>\1</sup>' -%}
+
+          {%- comment %} "et al." as a clickable toggle that expands to the list of other hidden authors {% endcomment %}
+          <span
+            class="more-authors"
+            title="click to view all hidden authors"
+            onclick="
+                var element = $(this);
+                element.attr('title', '');
+                var more_authors_text = element.text() == 'et al.' ? '{{ more_authors_show }}' : 'et al.';
+                var cursorPosition = 0;
+                var textAdder = setInterval(function(){
+                  element.html(more_authors_text.substring(0, cursorPosition + 1));
+                  if (++cursorPosition == more_authors_text.length){
+                    clearInterval(textAdder);
+                  }
+              }, '{{ site.more_authors_animation_delay }}');
+            "
+          >et al.</span>, including <em>{{ self_hidden_first }} {{ self_hidden_last_html }}</em>
+          {% if remaining_authors > 0 %}
             {%- assign more_authors_hide = remaining_authors | append: ' more author' -%}
             {%- if remaining_authors > 1 -%}
               {%- assign more_authors_hide = more_authors_hide | append: 's' -%}
             {%- endif -%}
-            {%- assign more_authors_show = '' -%}
-            {%- for author in entry.author_array offset: author_array_limit -%}
-              {%- assign curr_last = author.last | regex_replace: '[*∗†‡§¶‖&^]', '' -%}
-              {%- assign curr_is_self = false -%}
-              {%- if site.scholar.last_name contains curr_last -%}
-                {%- if site.scholar.first_name contains author.first -%}
-                  {%- assign curr_is_self = true -%}
-                {%- endif -%}
-              {%- endif -%}
-              {%- unless curr_is_self -%}
-                {%- if more_authors_show != '' -%}
-                  {%- assign more_authors_show = more_authors_show | append: ', ' -%}
-                {%- endif -%}
-                {%- assign more_authors_show = more_authors_show | append: author.first | append: ' ' | append: author.last -%}
-              {%- endunless -%}
-            {%- endfor -%}
-            {%- assign more_authors_show = more_authors_show | regex_replace: '([*∗†‡§¶‖&^]+)', '<sup>\1</sup>' -%}
-            , and
+            and
             <span
               class="more-authors"
               title="click to view {{ more_authors_hide }}"
@@ -162,9 +190,7 @@
                     }
                 }, '{{ site.more_authors_animation_delay }}');
               "
-            >
-              {{- more_authors_hide -}}
-            </span>
+            >{{- more_authors_hide -}}</span>
           {%- endif -%}
         {%- else -%}
           {%- assign more_authors_hide = more_authors | append: ' more author' -%}
