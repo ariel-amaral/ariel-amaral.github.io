@@ -152,8 +152,8 @@
           {%- endfor -%}
           {%- assign more_authors_show = more_authors_show | regex_replace: '([*∗†‡§¶‖&^]+)', '<sup>\1</sup>' -%}
 
-          {%- comment %} "et al." rendered as italic text only (not clickable) {% endcomment %}
-          <em>et al.</em>, including <em>{{ self_hidden_first }} {{ self_hidden_last_html }}</em>
+          {%- comment %} Italicize everything after the first author: "et al., including [name] and X more authors". The user's name keeps its <em> for the highlight underline; the surrounding <i> adds italic. {% endcomment %}
+          <i>et al., including <em>{{ self_hidden_first }} {{ self_hidden_last_html }}</em>
           {% if remaining_authors > 0 %}
             {%- assign more_authors_hide = remaining_authors | append: ' more author' -%}
             {%- if remaining_authors > 1 -%}
@@ -177,6 +177,7 @@
               "
             >{{- more_authors_hide -}}</span>
           {%- endif -%}
+          </i>
         {%- else -%}
           {%- assign more_authors_hide = more_authors | append: ' more author' -%}
           {%- if more_authors > 1 -%}
