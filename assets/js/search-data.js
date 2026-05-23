@@ -436,9 +436,9 @@ ninja.data = [{
           description: "another project with an image 🎉",
           section: "Projects",handler: () => {
               window.location.href = "/projects/9_project/";
-            },},{id: "projects-weighing-the-cosmic-web",
-          title: 'Weighing the Cosmic Web',
-          description: "An interactive look at how data quality and sample size shape what we can detect in intergalactic magnetic fields. Early prototype.",
+            },},{id: "projects-searching-for-magnetic-fields-in-the-cosmic-web",
+          title: 'Searching for Magnetic Fields in the Cosmic Web',
+          description: "Detecting an extremely faint signal by combining thousands of measurements statistically. An interactive look at how data quality and sample size decide what you can find. Early prototype.",
           section: "Projects",handler: () => {
               window.location.href = "/projects/cosmic-magnetism/";
             },},{id: "teachings-data-science-fundamentals",
