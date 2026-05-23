@@ -24,6 +24,13 @@ $pink-color: #f92080 !default;
 $pink-color-light: #ffdddd !default;
 $yellow-color: #efcc00 !default;
 
+// Signature palette (see CLAUDE.md). Orchid is the primary accent;
+// plum is reserved for body-text links and small UI text where the
+// orchid lacks contrast on white. Lighter orchid is for dark mode.
+$orchid-color: #b5638f !default;
+$orchid-color-light: #e6a6ce !default;
+$plum-color: #7a3e78 !default;
+
 $grey-color: #828282 !default;
 $grey-color-light: color.adjust($grey-color, $lightness: 40%);
 $grey-color-dark: #1c1c1d;

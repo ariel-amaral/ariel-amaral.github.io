@@ -4,6 +4,20 @@
 
 @use "variables" as v;
 
+body {
+  font-family: "Mulish", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.navbar-brand {
+  font-family: "Fraunces", Georgia, "Times New Roman", serif;
+}
+
 p,
 h1,
 h2,
@@ -17,6 +31,15 @@ li,
 span,
 strong {
   color: var(--global-text-color);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--global-theme-color);
 }
 
 hr {
@@ -37,10 +60,10 @@ table {
 
 a,
 table.table a {
-  color: var(--global-theme-color);
+  color: var(--global-link-color);
 
   &:hover {
-    color: var(--global-theme-color);
+    color: var(--global-link-color);
     text-decoration: underline;
   }
 
