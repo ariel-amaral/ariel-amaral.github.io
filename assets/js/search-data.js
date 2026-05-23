@@ -429,6 +429,11 @@ ninja.data = [{
           description: "another project with an image 🎉",
           section: "Projects",handler: () => {
               window.location.href = "/projects/9_project/";
+            },},{id: "projects-weighing-the-cosmic-web",
+          title: 'Weighing the Cosmic Web',
+          description: "An interactive look at how data quality and sample size shape what we can detect in intergalactic magnetic fields. Early prototype.",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/cosmic-magnetism/";
             },},{id: "teachings-data-science-fundamentals",
           title: 'Data Science Fundamentals',
           description: "This course covers the foundational aspects of data science, including data collection, cleaning, analysis, and visualization. Students will learn practical skills for working with real-world datasets.",
