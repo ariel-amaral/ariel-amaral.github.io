@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cross-correlation sandbox &mdash; prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Mulish:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FBF7FA; --card:#FFFFFF; --ink:#3B2F3F; --muted:#8A7E90; --hair:#EEE3EC;
+    --segbg:#F3EAF1; --grid:#EFE6EE; --axis:#C9BCC9;
+    --accent:#B5638F; --nvss:#7A3E78; --lotss:#2F8E8E; --sig:#C0436B; --zero:#B7A9BC;
+    --band:199,125,166; --shadow:rgba(120,70,110,.12);
+  }
+  [data-theme="dark"]{
+    --bg:#1E1622; --card:#2A2032; --ink:#F2E9F0; --muted:#B5A6BC; --hair:#3A2E40;
+    --segbg:#332838; --grid:#352B3D; --axis:#5A4C62;
+    --accent:#E6A6CE; --nvss:#CE93C9; --lotss:#5FC8C8; --sig:#E87399; --zero:#6E5E74;
+    --band:206,147,201; --shadow:rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Mulish","Nunito Sans",system-ui,-apple-system,sans-serif; line-height:1.5;
+    transition:background .35s,color .35s;}
+  .wrap{max-width:800px; margin:0 auto; padding:26px 18px 60px}
+  header{display:flex; align-items:flex-start; justify-content:space-between; gap:14px}
+  h1{font-family:"Fraunces","Iowan Old Style",Georgia,serif; font-weight:600;
+    font-size:clamp(22px,4.8vw,30px); line-height:1.14; margin:0 0 4px; letter-spacing:-.01em;}
+  h1 .em{color:var(--accent)}
+  .sub{color:var(--muted); font-size:14px; max-width:56ch; margin:0}
+  .toggle{flex:0 0 auto; cursor:pointer; border:1px solid var(--hair); background:var(--card);
+    color:var(--ink); border-radius:999px; padding:8px 13px; font:inherit; font-size:12.5px;
+    box-shadow:0 4px 14px var(--shadow);}
+  .rule{height:3px; width:50px; background:var(--accent); border-radius:3px; margin:14px 0 22px}
+  .card{background:var(--card); border-radius:18px; padding:18px; box-shadow:0 10px 30px var(--shadow);
+    border:1px solid var(--hair); margin-bottom:18px;}
+  .plot-title{font-family:"Fraunces",Georgia,serif; font-weight:600; font-size:16px; margin:0 0 8px}
+  svg{width:100%; height:auto; display:block}
+  .grid{stroke:var(--grid); stroke-width:1}
+  .axis{stroke:var(--axis); stroke-width:1.2}
+  .ax{fill:var(--muted); font-size:12px; font-family:inherit}
+  .axtitle{fill:var(--muted); font-size:12px; font-family:inherit}
+  .band{stroke:none}
+  .band-3{fill:rgba(var(--band),.13)} .band-2{fill:rgba(var(--band),.24)} .band-1{fill:rgba(var(--band),.40)}
+  .line{fill:none; stroke-width:2.6; stroke-linejoin:round; stroke-linecap:round}
+  .nvss{stroke:var(--nvss)} .lotss{stroke:var(--lotss)}
+  .dot-nvss{fill:var(--nvss)} .dot-lotss{fill:var(--lotss)}
+  .sig{fill:none; stroke:var(--sig); stroke-width:1.7; stroke-dasharray:7 5; opacity:.9}
+  .zero{stroke:var(--zero); stroke-width:1.3; stroke-dasharray:2 4}
+  .lcguide{stroke:var(--accent); stroke-width:1.3; stroke-dasharray:3 4; opacity:.65}
+  .lcring{fill:none; stroke:var(--accent); stroke-width:2}
+  .readout{margin:12px 2px 0; font-size:14.5px; line-height:1.5}
+  .readout b{color:var(--accent); font-size:16px}
+  .legend{display:flex; flex-wrap:wrap; gap:10px 18px; margin:10px 2px 0; font-size:13px; color:var(--muted)}
+  .lg{display:flex; align-items:center; gap:7px}
+  .lg i{width:20px; border-top:3px solid; display:inline-block; border-radius:3px}
+  .lg .sw{width:15px; height:11px; border-radius:3px; display:inline-block}
+  .ctitle{font-family:"Fraunces",Georgia,serif; font-weight:600; font-size:15px; margin:0 0 12px}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:0 0 14px}
+  .row .lab{font-size:13.5px; font-weight:700}
+  .row .lab small{font-weight:400; color:var(--muted); display:block; font-size:11.5px}
+  .seg{display:inline-flex; gap:5px; background:var(--segbg); padding:5px; border-radius:999px; border:1px solid var(--hair)}
+  .pill{border:none; background:transparent; color:var(--ink); font:inherit; font-size:13px; font-weight:600;
+    padding:7px 13px; border-radius:999px; cursor:pointer; transition:all .18s; white-space:nowrap}
+  .pill.active{background:var(--accent); color:#fff; box-shadow:0 3px 10px var(--shadow)}
+  .presets{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 18px}
+  .preset{border:1px solid var(--accent); color:var(--accent); background:transparent; font:inherit;
+    font-size:12.5px; font-weight:600; padding:7px 13px; border-radius:999px; cursor:pointer; transition:all .18s}
+  .preset:hover{background:var(--accent); color:#fff}
+  details{border-top:1px solid var(--hair); margin-top:6px; padding-top:6px}
+  summary{cursor:pointer; font-size:13.5px; font-weight:700; color:var(--accent); list-style:none; padding:8px 0}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:" \25B8"; color:var(--muted)}
+  details[open] summary::after{content:" \25BE"}
+  .srow{margin:10px 0 4px}
+  .srow .top{display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px}
+  .srow .top .val{color:var(--accent); font-weight:700; font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%; accent-color:var(--accent); height:22px}
+  .note{color:var(--muted); font-size:11.5px; margin:14px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Cross-correlation <span class="em">sandbox</span></h1>
+      <p class="sub">Tap the controls and watch the detectability floor move. This is a UX prototype, so the values are representative; the real arrays slot in later.</p>
+    </div>
+    <button class="toggle" onclick="document.documentElement.dataset.theme = document.documentElement.dataset.theme==='dark'?'light':'dark'">&#9681; theme</button>
+  </header>
+  <div class="rule"></div>
+
+  <div class="card">
+    <p class="plot-title">Cross-correlation function</p>
+    <svg id="plot" viewBox="0 0 760 440" role="img" aria-label="Cross-correlation plot"></svg>
+    <p class="readout" id="readout"></p>
+    <div class="legend">
+      <span class="lg"><i id="lg-obs" style="border-top-color:var(--nvss)"></i><span id="lg-obs-t">Observed CCF</span></span>
+      <span class="lg"><span class="sw" style="background:rgba(var(--band),.4)"></span>1/2/3&#963; confidence</span>
+      <span class="lg"><i style="border-top-color:var(--sig); border-top-style:dashed"></i>3&#963; significance floor</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="ctitle">Controls</p>
+    <div class="presets">
+      <button class="preset" data-preset="2021 result">2021 result</button>
+      <button class="preset" data-preset="LoTSS re-run">LoTSS re-run</button>
+      <button class="preset" data-preset="POSSUM future">POSSUM future</button>
+    </div>
+
+    <div class="row">
+      <div class="lab">RM precision<small>per-source uncertainty</small></div>
+      <div class="seg" id="seg-prec">
+        <button class="pill active" data-prec="NVSS">NVSS &middot; &plusmn;10</button>
+        <button class="pill" data-prec="LoTSS">LoTSS &middot; &plusmn;0.06</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="lab">Sample size<small>forecast, Fig 2.7</small></div>
+      <div class="seg" id="seg-size">
+        <button class="pill active" data-size="1.7k">~1.7k</button>
+        <button class="pill" data-size="10k">10k</button>
+        <button class="pill" data-size="100k">100k</button>
+      </div>
+    </div>
+
+    <details>
+      <summary>Modelling assumptions (advanced)</summary>
+      <p class="note" style="margin-top:4px">These reinterpret the same data into a field strength. They change the number, not the plotted curve.</p>
+      <div class="srow">
+        <div class="top"><span>Coherence scale L<sub>c</sub></span><span class="val" id="v-lc">2.5 Mpc</span></div>
+        <input type="range" id="s-lc" min="0.5" max="2.5" step="0.5" value="2.5">
+      </div>
+      <div class="srow">
+        <div class="top"><span>Electron density n<sub>e</sub></span><span class="val" id="v-ne">1.0 &times;10&#8315;&#8309; cm&#8315;&#179;</span></div>
+        <input type="range" id="s-ne" min="-6" max="-4" step="0.05" value="-5">
+      </div>
+      <div class="srow">
+        <div class="top"><span>Filling factor f</span><span class="val" id="v-f">0.06</span></div>
+        <input type="range" id="s-f" min="0.01" max="0.2" step="0.005" value="0.06">
+      </div>
+    </details>
+    <p class="note">Illustrative prototype. The data knobs (precision, sample size) move the 3&#963; floor; the model knobs (L<sub>c</sub>, n<sub>e</sub>, f) only re-read it.</p>
+  </div>
+</div>
+
+<script>
+const X=[440,730,1020,1310,1600,1890,2180,2470];
+const OBS={NVSS:[0.95,0.45,-0.55,-0.10,-0.25,-0.05,-0.35,-0.60],
+           LoTSS:[-0.05,0.12,0.45,0.05,0.12,0.05,0.10,0.00]};
+const EBASE=[3.10,1.90,1.45,1.40,1.35,1.20,1.25,1.20];
+const PREC={NVSS:1.0, LoTSS:0.55};
+const SIZE={'1.7k':1.0,'10k':0.33,'100k':0.11};
+const BASEBOUND={NVSS:{'0.5':44,'1':32,'1.5':30,'2':27,'2.5':32},
+                 LoTSS:{'0.5':26.5,'1':14.7,'1.5':14.5,'2':16.6,'2.5':16.7}};
+const NE_REF=1e-5, F_REF=0.06;
+const PRESETS={
+  '2021 result':{prec:'NVSS',size:'1.7k',lc:2.5,neLog:-5,f:0.06},
+  'LoTSS re-run':{prec:'LoTSS',size:'1.7k',lc:2.5,neLog:-5,f:0.06},
+  'POSSUM future':{prec:'LoTSS',size:'100k',lc:2.5,neLog:-5,f:0.06}
+};
+const VW=760,VH=440,L=70,R=26,T=26,B=58;
+const PX0=L,PX1=VW-R,PY0=T,PY1=VH-B;
+const XMIN=380,XMAX=2560,YMIN=-3.7,YMAX=4.1;
+const sx=v=>PX0+(v-XMIN)/(XMAX-XMIN)*(PX1-PX0);
+const sy=v=>PY1-(v-YMIN)/(YMAX-YMIN)*(PY1-PY0);
+const SUP={'-':'\u207B','0':'\u2070','1':'\u00B9','2':'\u00B2','3':'\u00B3','4':'\u2074','5':'\u2075','6':'\u2076','7':'\u2077','8':'\u2078','9':'\u2079'};
+const sup=n=>String(n).split('').map(d=>SUP[d]||d).join('');
+
+let state={prec:'NVSS',size:'1.7k',lc:2.5,ne:1e-5,f:0.06};
+
+function pts(xs,ys){return xs.map((a,i)=>sx(a).toFixed(1)+','+sy(ys[i]).toFixed(1)).join(' ');}
+function bandPoly(half){
+  const up=X.map((a,i)=>sx(a).toFixed(1)+','+sy(half[i]).toFixed(1));
+  const lo=X.map((a,i)=>sx(a).toFixed(1)+','+sy(-half[i]).toFixed(1)).reverse();
+  return up.concat(lo).join(' ');
+}
+function nearestIdx(lcMpc){const t=lcMpc*1000;let bi=0,bd=1e9;X.forEach((v,i)=>{const d=Math.abs(v-t);if(d<bd){bd=d;bi=i;}});return bi;}
+
+function redraw(){
+  const E=EBASE.map(e=>e*PREC[state.prec]*SIZE[state.size]);
+  const w3=E, w2=E.map(e=>e*0.62), w1=E.map(e=>e*0.33);
+  const obs=OBS[state.prec];
+  const idx=nearestIdx(state.lc);
+  const s=[];
+  const yticks=[-3,-2,-1,0,1,2,3,4], xticks=[500,1000,1500,2000,2500];
+  yticks.forEach(yt=>{const yy=sy(yt).toFixed(1);
+    s.push(`<line class="grid" x1="${PX0}" y1="${yy}" x2="${PX1}" y2="${yy}"/>`);
+    s.push(`<text class="ax" x="${PX0-10}" y="${(+yy+3.5).toFixed(1)}" text-anchor="end">${yt}</text>`);});
+  xticks.forEach(xt=>{const xx=sx(xt).toFixed(1);
+    s.push(`<line class="grid" x1="${xx}" y1="${PY0}" x2="${xx}" y2="${PY1}"/>`);
+    s.push(`<text class="ax" x="${xx}" y="${PY1+20}" text-anchor="middle">${xt}</text>`);});
+  s.push(`<polygon class="band band-3" points="${bandPoly(w3)}"/>`);
+  s.push(`<polygon class="band band-2" points="${bandPoly(w2)}"/>`);
+  s.push(`<polygon class="band band-1" points="${bandPoly(w1)}"/>`);
+  s.push(`<polyline class="sig" points="${pts(X,w3)}"/>`);
+  s.push(`<polyline class="sig" points="${pts(X,w3.map(v=>-v))}"/>`);
+  s.push(`<line class="zero" x1="${PX0}" y1="${sy(0).toFixed(1)}" x2="${PX1}" y2="${sy(0).toFixed(1)}"/>`);
+  s.push(`<line class="lcguide" x1="${sx(X[idx]).toFixed(1)}" y1="${PY0}" x2="${sx(X[idx]).toFixed(1)}" y2="${PY1}"/>`);
+  s.push(`<circle class="lcring" cx="${sx(X[idx]).toFixed(1)}" cy="${sy(w3[idx]).toFixed(1)}" r="6"/>`);
+  const cls=state.prec==='NVSS'?'nvss':'lotss';
+  s.push(`<polyline class="line ${cls}" points="${pts(X,obs)}"/>`);
+  obs.forEach((b,i)=>s.push(`<circle class="dot-${cls}" cx="${sx(X[i]).toFixed(1)}" cy="${sy(b).toFixed(1)}" r="3.4"/>`));
+  s.push(`<line class="axis" x1="${PX0}" y1="${PY0}" x2="${PX0}" y2="${PY1}"/>`);
+  s.push(`<line class="axis" x1="${PX0}" y1="${PY1}" x2="${PX1}" y2="${PY1}"/>`);
+  s.push(`<text class="axtitle" x="${((PX0+PX1)/2).toFixed(0)}" y="${VH-12}" text-anchor="middle">Impact parameter  r  [kpc]</text>`);
+  s.push(`<text class="axtitle" transform="translate(18,${((PY0+PY1)/2).toFixed(0)}) rotate(-90)" text-anchor="middle">\u03BE(r)  [\u00D710\u207B\u2076 rad m\u207B\u00B2 kpc\u207B\u00B2]</text>`);
+  document.getElementById('plot').innerHTML=s.join('');
+  document.getElementById('lg-obs').style.borderTopColor='var(--'+cls+')';
+  document.getElementById('lg-obs-t').textContent='Observed CCF ('+state.prec+')';
+  const base=BASEBOUND[state.prec][String(state.lc)];
+  const bound=base*SIZE[state.size]*(NE_REF/state.ne)*Math.sqrt(F_REF/state.f);
+  const bstr=bound>=10?bound.toFixed(1).replace(/\.0$/,''):bound.toFixed(1);
+  document.getElementById('readout').innerHTML=
+    `${state.prec} &middot; ${state.size} sources &middot; L<sub>c</sub> = ${state.lc.toFixed(1)} Mpc &nbsp;&rarr;&nbsp; 3&#963; upper limit &nbsp;<b>B&#8741; &lt; ${bstr} nG</b>`;
+}
+
+function setActive(group,attr,val){
+  document.querySelectorAll('#'+group+' .pill').forEach(p=>p.classList.toggle('active',p.dataset[attr]===val));
+}
+function fmtNe(ne){const exp=Math.floor(Math.log10(ne)+1e-9);const m=ne/Math.pow(10,exp);return m.toFixed(1)+' \u00D710'+sup(exp)+' cm'+sup(-3);}
+
+document.getElementById('seg-prec').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;
+  state.prec=b.dataset.prec; setActive('seg-prec','prec',state.prec); redraw();});
+document.getElementById('seg-size').addEventListener('click',e=>{const b=e.target.closest('.pill');if(!b)return;
+  state.size=b.dataset.size; setActive('seg-size','size',state.size); redraw();});
+document.getElementById('s-lc').addEventListener('input',e=>{state.lc=parseFloat(e.target.value);
+  document.getElementById('v-lc').textContent=state.lc.toFixed(1)+' Mpc'; redraw();});
+document.getElementById('s-ne').addEventListener('input',e=>{state.ne=Math.pow(10,parseFloat(e.target.value));
+  document.getElementById('v-ne').textContent=fmtNe(state.ne); redraw();});
+document.getElementById('s-f').addEventListener('input',e=>{state.f=parseFloat(e.target.value);
+  document.getElementById('v-f').textContent=state.f.toFixed(2); redraw();});
+document.querySelectorAll('.preset').forEach(btn=>btn.addEventListener('click',()=>{
+  const p=PRESETS[btn.dataset.preset];
+  state.prec=p.prec; state.size=p.size; state.lc=p.lc; state.ne=Math.pow(10,p.neLog); state.f=p.f;
+  setActive('seg-prec','prec',state.prec); setActive('seg-size','size',state.size);
+  document.getElementById('s-lc').value=state.lc; document.getElementById('v-lc').textContent=state.lc.toFixed(1)+' Mpc';
+  document.getElementById('s-ne').value=p.neLog; document.getElementById('v-ne').textContent=fmtNe(state.ne);
+  document.getElementById('s-f').value=state.f; document.getElementById('v-f').textContent=state.f.toFixed(2);
+  redraw();
+}));
+
+redraw();
+</script>
+</body>
+</html>
