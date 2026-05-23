@@ -2,7 +2,7 @@
 layout: page
 title: Searching for Magnetic Fields in the Cosmic Web
 description: Detecting an extremely faint signal by combining thousands of measurements statistically. An interactive look at how data quality and sample size decide what you can find. Early prototype.
-img: assets/img/3.jpg
+img: assets/img/cosmic-magnetism.png
 importance: 1
 category: astronomy
 ---
