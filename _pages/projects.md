@@ -2,7 +2,7 @@
 layout: page
 title: projects
 permalink: /projects/
-description: A growing collection of your cool projects.
+description: Currently under construction. Here I plan to slowly create an achrive of all of my projects overlapping both astronomy and sports data science (and anything else that catches my attention along the way).
 nav: true
 nav_order: 3
 display_categories: [astronomy]
