@@ -31,6 +31,6 @@ I'm a PhD candidate in the David A. Dunlap Department of Astronomy &amp; Astroph
 
 I've submitted my thesis (June 9, 2026), and after I defend (scheduled for August 2026), I'm transitioning into sports data science with a focus on hockey analytics. I'm particularly interested in player evaluation, performance modelling, and data-driven strategy. The pivot is less of a leap than it sounds: the quantitative work I do every day (Bayesian modelling, signal decomposition, validation testing, communicating uncertainty) is the same toolkit that drives modern sports analytics.
 
-I've been a sports fan my whole life. Hockey is my favourite (go Leafs go!), but I follow most other major sports too, particularly anything Toronto. The data side of sports is more recent for me, and it's quickly become the work I want to do next. I'm currently building a hockey analytics portfolio to that end.
+I've been a sports fan my whole life with hockey being my absolute favourite, but I follow most other major sports too, particularly anything Toronto. The data side of sports is more recent for me, and it's quickly become the work I want to do next. I'm currently building a hockey analytics portfolio to that end.
 
 This site is where I'm collecting my research, projects, and writing as I work through this transition. You'll find a mix of academic publications, sports analytics work as I build it out, and other things I'm interested in along the way. Always happy to hear from people working at the intersection of sports and data.
